@@ -44,3 +44,8 @@
     box-shadow: 1px -4px 28px 4px rgba(209, 0, 161, 0.49);
 
 }
+
+.JokeList-spinner {
+    text-align: center;
+    color: #6900b4;
+}
