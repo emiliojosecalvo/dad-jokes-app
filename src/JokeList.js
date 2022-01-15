@@ -15,6 +15,8 @@ export default class JokeList extends Component {
             jokes: JSON.parse(window.localStorage.getItem("jokes") || '[]'),
             loading: false
         };
+        this.seenJokes = new Set(this.state.jokes.map(j => j.text));
+        console.log(this.seenJokes)
         this.handleClick = this.handleClick.bind(this);
     }
     componentDidMount() {
@@ -25,21 +27,33 @@ export default class JokeList extends Component {
         this.setState({ loading: true }, this.getJokes);
     }
     async getJokes() {
-        let jokes = [];
-        while (jokes.length < this.props.numJokesGet) {
-            //https://icanhazdadjoke.com/ to fetch random dad joke
-            let response = await axios.get('https://icanhazdadjoke.com/', { headers: { accept: 'application/json' } });
-            jokes.push({ id: uuidv4(), text: response.data.joke, votes: 0 })
+        try {
+            let jokes = [];
+            while (jokes.length < this.props.numJokesGet) {
+                //https://icanhazdadjoke.com/ to fetch random dad joke
+                let response = await axios.get('https://icanhazdadjoke.com/', { headers: { accept: 'application/json' } });
+                let newJoke = response.data.joke;
+                //Check is the joke that is fetching is not already in the array
+                if (!this.seenJokes.has(newJoke)) {
+                    jokes.push({ id: uuidv4(), text: newJoke, votes: 0 });
+                } else {
+                    console.log('Duplicate Found');
+                    console.log(newJoke);
+                }
+            }
+            this.setState(
+                st => ({
+                    loading: false,
+                    jokes: [...st.jokes, ...jokes]
+                }),
+                () =>
+                    //this function runs after the setState so the state jokes could be save on localstorage
+                    window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes))
+            );
+        } catch (e) {
+            alert(e);
+            this.setState({ loading: false })
         }
-        this.setState(
-            st => ({
-                loading: false,
-                jokes: [...st.jokes, ...jokes]
-            }),
-            () =>
-                //this function runs after the setState so the state jokes could be save on localstorage
-                window.localStorage.setItem('jokes', JSON.stringify(this.state.jokes))
-        );
     }
     // add or remove votes from a joke
     handleVote(id, delta) {
